@@ -13,34 +13,31 @@ FB_APP_ID = os.getenv("FB_APP_ID")
 FB_APP_SECRET = os.getenv("FB_APP_SECRET")
 FB_REDIRECT_URI = os.getenv("FB_REDIRECT_URI")
 
+@app.context_processor
+def inject_env_vars():
+    return {
+        'fb_app_id': os.getenv("FB_APP_ID"),
+        'api_version': 'v21.0'  # Set your desired API version here
+    }
+
 @app.route('/')
 def home():
     return render_template('home.html')
 
 @app.route('/login')
 def login():
-    # Redirect to Facebook for login
     return redirect(f"https://www.facebook.com/v21.0/dialog/oauth?client_id={FB_APP_ID}&redirect_uri={FB_REDIRECT_URI}&scope=email,public_profile")
 
 @app.route('/callback')
 def callback():
-    # Get the authorization code from the URL
     code = request.args.get('code')
-    
-    # Exchange the code for an access token
     token_url = f"https://graph.facebook.com/v21.0/oauth/access_token?client_id={FB_APP_ID}&redirect_uri={FB_REDIRECT_URI}&client_secret={FB_APP_SECRET}&code={code}"
     response = requests.get(token_url)
     data = response.json()
-    
-    # Get the access token
     access_token = data.get('access_token')
-    
-    # Use the access token to get user information
     user_info_url = f"https://graph.facebook.com/me?fields=id,name,email&access_token={access_token}"
     user_info_response = requests.get(user_info_url)
     user_info = user_info_response.json()
-    
-    # Store user info in session
     session['user'] = user_info
     return redirect(url_for('profile'))
 
